@@ -1,0 +1,22 @@
+# MATLAB
+*.asv
+*.mex*
+*.mat
+*.fig
+*.slxc
+
+# Results directory
+results/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Summary documents (optional - remove if you want to track these)
+FIXES_APPLIED_SUMMARY.txt
