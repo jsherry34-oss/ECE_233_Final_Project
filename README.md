@@ -82,7 +82,7 @@ All system parameters are defined in `utils/set_system_parameters.m` following [
    - Enables frequency-dependent beamforming
 
 2. **Frequency-Dependent AWVs** ([R-5, Eq. 4])
-   - w[m]ₙ = exp[j(2πfₘτₙ + φₙ)]
+   - w[m]ₙ = exp[-j(2πfₘτₙ + φₙ)]
    - Each subcarrier probes a different direction
 
 3. **Channel Model** ([R-5, Eq. 1])
@@ -98,20 +98,3 @@ All system parameters are defined in `utils/set_system_parameters.m` following [
    - Gain error: 10log₁₀(αₙ) ~ N(0, σA²)
    - Phase error: φ̃ₙ ~ N(φₙ, σP²)
    - Delay error: τ̃ₙ ~ N(τₙ, σT²)
-
-## Bug Fixes (September 2026)
-
-**Critical bugs have been identified and fixed.** See [BUGFIXES.md](BUGFIXES.md) for details.
-
-### Issues Corrected:
-1. **Phase convention errors** - Changed all exponentials from `-1j` to `+1j` to match paper convention
-2. **Frequency spacing formula** - Fixed OFDM subcarrier spacing: `BW/(Mtot-1)` instead of `BW/Mtot`
-3. **SNR calculation** - Corrected noise power normalization (removed erroneous `M` factor)
-4. **Dictionary construction** - Fixed DFT beam phase signs
-
-### Verification:
-Run `verify_bugfixes.m` to test all corrections before generating plots.
-
-```matlab
->> verify_bugfixes
-```
