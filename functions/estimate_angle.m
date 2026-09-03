@@ -10,7 +10,6 @@ function [theta_hat, p_hat] = estimate_angle(Y, M_sets, B, angle_grid, R, M_all)
 
     % # directions
     D = length(M_sets);
-    Q = length(angle_grid);
 
     %% compute direction powers
     p_hat = zeros(D, 1);

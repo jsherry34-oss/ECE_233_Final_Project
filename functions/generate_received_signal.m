@@ -10,20 +10,19 @@ function Y = generate_received_signal(H_subbands, w_matrix, v, M_all, params, SN
     NR = params.NR;
     Kc = params.Kc;
     Mtot = params.Mtot;
-    sigma_squared = params.sigma_squared;
 
     % Number of training subcarriers
     M = length(M_all);
 
-    % compute total channel power and noise power
-    P_channel = sum(sigma_squared);
-    SNR_linear = 10^(SNR_dB/10);
-
-    % training pilot power normalization
+    % training pilot power normalization per [R-5, Eq. 3]
     pilot_power = 1/sqrt(M);
 
-    % noise power per antenna element
-    sigma_N_squared = P_channel / (M * NR * SNR_linear);
+    % Convert SNR to linear scale
+    SNR_linear = 10^(SNR_dB/10);
+
+    % noise power calculation
+    sigma_1_squared = params.sigma_squared(1);  % Dominant cluster only
+    sigma_N_squared = sigma_1_squared / (M * NR * SNR_linear);
 
     % generate received signal for each training subcarrier
     Y = zeros(1, M);

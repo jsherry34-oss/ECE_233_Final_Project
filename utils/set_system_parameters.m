@@ -24,7 +24,7 @@ function params = set_system_parameters()
     params.delay_spread = 10e-9;
 
     % monte carlo sim 
-    params.N_trials = 5000;
+    params.N_trials = 500;
 
     % ADC resolution 
     params.ADC_bits = 5;

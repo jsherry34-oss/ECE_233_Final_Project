@@ -17,6 +17,7 @@ function [tau, phi] = design_ttd_codebook(params, R)
     % compute phase compensation factor
     psi = mod(2*pi*R*(fc - BW/2)/BW + pi, 2*pi) - pi;
 
+    % in matlab sign(0) = 0, so set it to 1
     psi_sign = sign(psi);
     psi_sign(psi_sign == 0) = 1;
 

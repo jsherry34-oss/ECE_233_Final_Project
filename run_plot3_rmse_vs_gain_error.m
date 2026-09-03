@@ -92,13 +92,6 @@ ylim([0.1, 20]);
 set(gca, 'FontSize', 12);
 box on;
 
-% add system parameters text box
-annotation('textbox', [0.15, 0.80, 0.25, 0.12], ...
-           'String', sprintf('SNR = 0 dB\nR = 4\nσ_P = 0°\nσ_T = 0 ps'), ...
-           'FontSize', 11, ...
-           'BackgroundColor', 'white', ...
-           'EdgeColor', 'black');
-
 % save figure
 saveas(gcf, 'results/plot3_rmse_vs_gain_error.fig');
 saveas(gcf, 'results/plot3_rmse_vs_gain_error.png');

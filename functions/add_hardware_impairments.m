@@ -32,8 +32,9 @@ function w_impaired = add_hardware_impairments(~, m_indices, tau, phi, params, s
     end
 
     % subcarrier frequencies
-    f_m = fc - BW/2 + (m_indices - 1) * (BW / Mtot);
+    f_m = fc - BW/2 + (m_indices - 1) * (BW / (Mtot - 1));
 
+    % BB TTD architecture: phase includes (f_m - fc) term [R-5, Eq. 5]
     phase_term = 2*pi * (tau_tilde * (f_m - fc)) + phi_tilde;
 
     w_impaired = alpha .* exp(-1j * phase_term);

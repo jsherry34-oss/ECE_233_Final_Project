@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project implements a single-shot beam training algorithm for wideband millimeter-wave (mmWave) OFDM systems using True-Time-Delay (TTD) arrays. The implementation follows the reference paper:
+This project attempts to implement a single-shot beam training algorithm for wideband millimeter-wave (mmWave) OFDM systems using True-Time-Delay (TTD) arrays. The implementation follows the reference paper:
 
 > V. Boljanovic, H. Yan, E. Ghaderi, D. Heo, S. Gupta and D. Cabric, "Design of Millimeter-Wave Single-Shot Beam Training for True-Time-Delay Array," 2020 IEEE 21st International Workshop on Signal Processing Advances in Wireless Communications (SPAWC), pp. 1-5, 2020. [IEEE Xplore](https://ieeexplore.ieee.org/document/9154313)
 
@@ -11,6 +11,7 @@ This project implements a single-shot beam training algorithm for wideband milli
 ```
 ECE 233 - Final Project/
 ├── main_project.m                    % master script
+├── verify_bugfixes.m                 % verification script for bug fixes
 ├── run_plot1_beam_patterns.m 
 ├── run_plot2_rmse_vs_snr.m    
 ├── run_plot3_rmse_vs_gain_error.m  
@@ -32,6 +33,7 @@ ECE 233 - Final Project/
 │   ├── plot2_rmse_vs_snr.fig/.png
 │   ├── plot3_rmse_vs_gain_error.fig/.png
 │   └── plot4_rmse_vs_phase_error.fig/.png
+├── BUGFIXES.md                       % documentation of bug fixes
 └── README.md                         
 ```
 
@@ -96,3 +98,20 @@ All system parameters are defined in `utils/set_system_parameters.m` following [
    - Gain error: 10log₁₀(αₙ) ~ N(0, σA²)
    - Phase error: φ̃ₙ ~ N(φₙ, σP²)
    - Delay error: τ̃ₙ ~ N(τₙ, σT²)
+
+## Bug Fixes (September 2026)
+
+**Critical bugs have been identified and fixed.** See [BUGFIXES.md](BUGFIXES.md) for details.
+
+### Issues Corrected:
+1. **Phase convention errors** - Changed all exponentials from `-1j` to `+1j` to match paper convention
+2. **Frequency spacing formula** - Fixed OFDM subcarrier spacing: `BW/(Mtot-1)` instead of `BW/Mtot`
+3. **SNR calculation** - Corrected noise power normalization (removed erroneous `M` factor)
+4. **Dictionary construction** - Fixed DFT beam phase signs
+
+### Verification:
+Run `verify_bugfixes.m` to test all corrections before generating plots.
+
+```matlab
+>> verify_bugfixes
+```

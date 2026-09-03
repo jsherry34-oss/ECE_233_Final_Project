@@ -4,7 +4,7 @@ close all; clc;
 addpath('functions');
 addpath('utils');
 
-fprintf('Generating Plot 4 ...\n');
+fprintf('Generating Plot 5 ...\n');
 
 % initialize params
 params = set_system_parameters();
@@ -12,14 +12,10 @@ params = set_system_parameters();
 % simulation params
 R = 4;
 SNR_dB = 0;
-sigma_P_range_deg = 0:5:50;
+sigma_T_range = 0:10:400;  % delay error range in picoseconds
 
-% convert to radians
-sigma_P_range = sigma_P_range_deg * pi/180;
-
-% no other impairments
 sigma_A = 0;
-sigma_T = 0;
+sigma_P = 0;
 
 %% setup
 % design TTD codebook
@@ -32,15 +28,15 @@ sigma_T = 0;
 [B, angle_grid] = build_dictionary(params, R, tau, phi);
 
 %% monte carlo simulation
-RMSE_results = zeros(size(sigma_P_range));
+RMSE_results = zeros(size(sigma_T_range));
 
 fprintf('\n--- Fixed: SNR = 0 dB, R = 4 ---\n\n');
 
-for sigma_idx = 1:length(sigma_P_range)
-    sigma_P = sigma_P_range(sigma_idx);
-    sigma_P_deg = sigma_P_range_deg(sigma_idx);
+for sigma_idx = 1:length(sigma_T_range)
+    sigma_T_ps = sigma_T_range(sigma_idx);
+    sigma_T = sigma_T_ps * 1e-12;  % convert ps to seconds
 
-    fprintf('σ_P = %3.0f deg: ', sigma_P_deg);
+    fprintf('σ_T = %3d ps: ', sigma_T_ps);
 
     % estimation errors
     errors = zeros(params.N_trials, 1);
@@ -53,8 +49,8 @@ for sigma_idx = 1:length(sigma_P_range)
         % BS precoder
         v = array_response(theta_AoD(1), params.NT);
 
-        % apply hardware impairments
-        if sigma_P > 0
+        % apply impairments
+        if sigma_T > 0
             w_matrix_impaired = add_hardware_impairments([], M_all, tau, phi, params, ...
                                                          sigma_A, sigma_P, sigma_T);
         else
@@ -72,7 +68,7 @@ for sigma_idx = 1:length(sigma_P_range)
         errors(trial) = error_rad;
     end
 
-    % RMSE in degrees
+    % compute RMSE
     RMSE_deg = sqrt(mean(errors.^2)) * 180/pi;
     RMSE_results(sigma_idx) = RMSE_deg;
 
@@ -82,31 +78,33 @@ end
 %% plot results
 figure('Position', [100, 100, 900, 600]);
 
-% RMSE vs phase error
-semilogy(sigma_P_range_deg, RMSE_results, 'r-d', ...
-         'LineWidth', 2, 'MarkerSize', 8, 'MarkerFaceColor', 'r');
+% plot RMSE vs delay error
+semilogy(sigma_T_range, RMSE_results, 'b-o', ...
+         'LineWidth', 2, 'MarkerSize', 8, 'MarkerFaceColor', 'b');
 
 % formatting
 grid on;
-xlabel('Standard Deviation of Phase Error σ_P (degrees)', 'FontSize', 14);
+xlabel('Standard Deviation of Delay Error σ_T (ps)', 'FontSize', 14);
 ylabel('RMSE (degrees)', 'FontSize', 14);
-title('RMSE of Angle Estimation vs. Phase Error (SNR = 0 dB, R = 4)', 'FontSize', 16);
-xlim([sigma_P_range_deg(1), sigma_P_range_deg(end)]);
-ylim([0.1, 20]);
+title('RMSE of Angle Estimation vs. TTD Delay Error (SNR = 0 dB, R = 4)', 'FontSize', 16);
+xlim([sigma_T_range(1), sigma_T_range(end)]);
+ylim([0.1, 50]);
 
 set(gca, 'FontSize', 12);
 box on;
 
 % save figure
-saveas(gcf, 'results/plot4_rmse_vs_phase_error.fig');
-saveas(gcf, 'results/plot4_rmse_vs_phase_error.png');
+saveas(gcf, 'results/plot5_rmse_vs_delay_error.fig');
+saveas(gcf, 'results/plot5_rmse_vs_delay_error.png');
 
-fprintf('\nPlot 4 saved to results/\n');
-fprintf('  - plot4_rmse_vs_phase_error.fig\n');
-fprintf('  - plot4_rmse_vs_phase_error.png\n\n');
+fprintf('\nPlot 5 saved to results/\n');
+fprintf('  - plot5_rmse_vs_delay_error.fig\n');
+fprintf('  - plot5_rmse_vs_delay_error.png\n\n');
 
 %% print summary
-fprintf('σ_P =  0 deg: RMSE = %6.3f deg\n', RMSE_results(1));
-fprintf('σ_P = 25 deg: RMSE = %6.3f deg\n', RMSE_results(sigma_P_range_deg == 25));
-fprintf('σ_P = 30 deg: RMSE = %6.3f deg\n', RMSE_results(sigma_P_range_deg == 30));
-fprintf('σ_P = 50 deg: RMSE = %6.3f deg\n', RMSE_results(end));
+fprintf('\n--- Summary ---\n');
+fprintf('σ_T =   0 ps: RMSE = %6.3f deg\n', RMSE_results(sigma_T_range == 0));
+fprintf('σ_T =  50 ps: RMSE = %6.3f deg\n', RMSE_results(sigma_T_range == 50));
+fprintf('σ_T = 100 ps: RMSE = %6.3f deg\n', RMSE_results(sigma_T_range == 100));
+fprintf('σ_T = 200 ps: RMSE = %6.3f deg\n', RMSE_results(sigma_T_range == 200));
+fprintf('σ_T = 400 ps: RMSE = %6.3f deg\n', RMSE_results(end));
