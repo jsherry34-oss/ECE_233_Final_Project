@@ -21,31 +21,23 @@
 
 \maketitle
 
-\begin{abstract}
-This report presents the implementation and evaluation of a single-shot beam training algorithm for wideband millimeter-wave (mmWave) OFDM systems using true-time-delay (TTD) arrays. Based on the work by Boljanovic et al.~\cite{boljanovic2020design}, I design frequency-dependent beam training codebooks for analog TTD arrays and implement a dictionary-based angle estimation algorithm. The system operates at 60~GHz with 2~GHz bandwidth and uses 128 base station antennas and 16 user equipment antennas. I evaluate the root mean square error (RMSE) of angle of arrival estimation under various signal-to-noise ratios and hardware impairment conditions, including gain, phase, and delay errors. Results demonstrate that the TTD-based approach enables efficient beam training with diversity factors of $R = 1, 2, 4$, achieving accurate angle estimation. However, I observe several discrepancies compared to the reference paper, including an elevated noise floor in my SNR results and a stronger sensitivity to phase errors relative to gain errors, suggesting potential implementation differences despite faithful adherence to the mathematical formulations in~\cite{boljanovic2020design}.
-\end{abstract}
-
 \section{Introduction}
 
-Millimeter-wave (mmWave) communications are essential for achieving high data rates in fifth-generation and beyond wireless systems due to abundant available spectrum. However, mmWave systems face severe propagation loss and require beamforming with large antenna arrays at both the base station (BS) and user equipment (UE) to maintain reliable links~\cite{boljanovic2020design}.
+This report presents the implementation and evaluation of a single-shot beam training algorithm for wideband millimeter-wave (mmWave) orthogonal frequency division multiplexing (OFDM) systems using true-time-delay (TTD) arrays. MmWave communications are essential for achieving high data rates in fifth-generation and beyond wireless systems due to abundant available spectrum. However, these systems face severe propagation loss and require beamforming with large antenna arrays at both the base station (BS) and user equipment (UE) to maintain reliable links~\cite{boljanovic2020design}.
 
 Conventional phased-array systems based on phase shifters require exhaustive beam sweeping to identify dominant propagation directions, resulting in significant training overhead. With such arrays, all frequency components are steered to or combined from the same direction because identical phase shifts are applied across all signal frequencies. As array sizes increase and beamwidths narrow, this training overhead becomes prohibitive.
 
-True-time-delay (TTD) arrays offer a fundamentally different approach. Unlike phase shifters, TTD elements introduce frequency-dependent delays that enable different frequencies to probe different angular directions simultaneously~\cite{boljanovic2020design}. This frequency-diversity property allows a UE equipped with a TTD array to determine the dominant propagation direction using a single training symbol and simple frequency-domain digital signal processing.
+TTD arrays offer a fundamentally different approach. Unlike phase shifters, TTD elements introduce frequency-dependent delays that enable different frequencies to probe different angular directions simultaneously~\cite{boljanovic2020design}. This frequency-diversity property allows UE equipped with a TTD array to determine the dominant propagation direction using a single training symbol.
 
-In this project, I implement and evaluate the TTD-based beam training system proposed by Boljanovic et al.~\cite{boljanovic2020design}. My contributions include:
-\begin{itemize}
-    \item Design of frequency-dependent codebooks for analog TTD arrays with controllable diversity factor $R$
-    \item Implementation of a dictionary-based super-resolution angle estimation algorithm
-    \item Comprehensive evaluation of beam training performance under realistic hardware impairments
-    \item Analysis of gain, phase, and delay errors on estimation accuracy
-\end{itemize}
+In this project, I attempted to implement and evaluate the TTD-based beam training system proposed by Boljanovic et al.~\cite{boljanovic2020design}. Based on their work, I designed frequency-dependent beam training codebooks for analog TTD arrays and implemented a dictionary-based angle estimation algorithm. The system operates at 60~GHz with 2~GHz bandwidth and uses 128 base station antennas and 16 user equipment antennas. To measure the perofrmance, I evaluated the root mean square error (RMSE) of angle of arrival estimation under various signal-to-noise ratios and hardware impairment conditions, including gain, phase, and delay errors.
+
+The results in the paper demonstrate that the TTD-based approach enables efficient beam training with diversity factors of $R = 1, 2, 4$, achieving accurate angle estimation. However, I observed several discrepancies compared to the reference paper, including an elevated noise floor in my SNR results and a stronger sensitivity to phase errors relative to gain errors, suggesting implementation differences despite my best efforts to adhere as closely as possible to the mathematical formulations in~\cite{boljanovic2020design}.
 
 \section{System Model}
 
 \subsection{OFDM-Based Wideband Communication}
 
-I consider a downlink beam training scenario between a BS and UE using orthogonal frequency division multiplexing (OFDM) with cyclic prefix. The system parameters follow the specifications in~\cite{boljanovic2020design} and are summarized in Table~\ref{tab:parameters}.
+As outlined in the project spec, I considered a downlink beam training scenario between a BS and UE using OFDM with cyclic prefix. The system parameters follow the specifications in~\cite{boljanovic2020design} and are summarized in Table~\ref{tab:parameters}.
 
 \begin{table}[h]
 \centering
@@ -69,11 +61,12 @@ Monte Carlo Trials & $N_{\text{trials}}$ & 1000 \\
 \end{tabular}
 \end{table}
 
+\noindent
 The BS is equipped with a digital array and uses a fixed precoder $\mathbf{v} = \mathbf{a}_T(\hat{\theta}^{(T)})$ designed according to a known angle of departure, where $\mathbf{a}_T(\theta)$ is the transmit array response vector. The UE employs a TTD array with delay elements implemented in the baseband domain, enabling frequency-dependent beam patterns as described in~\cite{boljanovic2020design}.
 
 \subsection{Channel Model}
 
-I implement a wideband geometric channel model with $L = 3$ multipath clusters, where the dominant path is 10~dB stronger than each of the other two paths. For a given sub-band $k$, the channel matrix is expressed as~\cite{boljanovic2020design}:
+I implemented a wideband geometric channel model with $L = 3$ multipath clusters, where the dominant path is 10~dB stronger than each of the other two paths. For a given sub-band $k$, the channel matrix is expressed as:
 \begin{equation}
 \mathbf{H}[k] = \sum_{l=1}^{L} G_l[k] \mathbf{a}_R(\theta_l^{(R)}) \mathbf{a}_T^H(\theta_l^{(T)})
 \end{equation}
@@ -82,21 +75,25 @@ where $\theta_l^{(R)}$ and $\theta_l^{(T)}$ are the angle of arrival (AoA) and a
 [\mathbf{a}_R(\theta)]_n = N_R^{-1/2} \exp[j(n-1)\pi\sin(\theta)], \quad n = 1, \ldots, N_R
 \end{equation}
 
+\noindent
 The complex gains $G_l[k]$ are modeled as independent zero-mean complex Gaussian random variables with variance $\sigma_l^2$, where $\sigma_1^2 \geq \sigma_2^2 \geq \sigma_3^2$ and $\sigma_1^2/\sigma_2^2 = 10$~dB.
 
 \subsection{Received Signal with TTD Array}
 
-The BS transmits a power-normalized training pilot on $M$ selected subcarriers: $X[m] = M^{-1/2}$ for $m \in \mathcal{M}$. At the UE, the received signal at the $m$-th subcarrier is~\cite{boljanovic2020design}:
+The BS transmits a power-normalized training pilot on $M$ selected subcarriers: $X[m] = M^{-1/2}$ for $m \in \mathcal{M}$. At the UE, the received signal at the $m$-th subcarrier is:
 \begin{equation}
 Y[m] = M^{-1/2} \mathbf{w}^H[m] \mathbf{H}[k] \mathbf{v} + \mathbf{w}^H[m] \mathbf{n}[m]
 \end{equation}
 where $\mathbf{n}[m] \sim \mathcal{CN}(0, \sigma_N^2 \mathbf{I}_{N_R})$ is additive white Gaussian noise, and $\mathbf{w}[m]$ is the frequency-dependent TTD antenna weight vector.
+\\
+\\
+\textbf{Note:} Based on my understanding, the reference paper~\cite{boljanovic2020design} does not explicitly specify how noise power should be scaled relative to the number of training subcarriers $M$. In my implementation, I include the factor $M$ in the noise power calculation (i.e., the noise variance is scaled by $M$) based on the assumption that this accounts for the energy aggregation across $M$ subcarriers.
 
 \section{TTD Codebook Design}
 
 \subsection{Frequency-Dependent Beamforming}
 
-The key advantage of TTD arrays lies in their ability to synthesize frequency-dependent beams. The $n$-th element of the TTD weight vector at subcarrier $m$ is~\cite{boljanovic2020design}:
+The key advantage of TTD arrays lies in the ability to synthesize frequency-dependent beams. The $n$-th element of the TTD weight vector at subcarrier $m$ is:
 \begin{equation}
 [\mathbf{w}[m]]_n = \exp[j(2\pi f_m \tau_n + \phi_n)]
 \end{equation}
@@ -104,7 +101,7 @@ where $f_m = f_c - \text{BW}/2 + (m-1)\text{BW}/(M_{\text{tot}}-1)$ is the subca
 
 \subsection{Diversity Factor and Subcarrier Selection}
 
-To introduce frequency diversity, we divide the bandwidth into $R$ distinct sub-bands. Within each sub-band, we associate $D$ uniformly spaced subcarriers with $D$ fixed directional beams. For a given direction $d$, the set of $R$ subcarriers mapped to that direction is~\cite{boljanovic2020design}:
+To introduce frequency diversity, the bandwidth is divided into $R$ distinct sub-bands. Within each sub-band, there are $D$ uniformly spaced subcarriers associated with $D$ fixed directional beams. For a given direction $d$, the set of $R$ subcarriers mapped to that direction is:
 \begin{equation}
 \mathcal{M}_d = \left\{ m \mid m = 1 + (d-1)\lfloor M_{\text{tot}}/(DR)\rfloor + (r-1)M_{\text{tot}}/R, \; r = 1, \ldots, R \right\}
 \end{equation}
@@ -112,13 +109,13 @@ The parameter $R$ is called the diversity factor, representing the number of ind
 
 \subsection{Delay and Phase Tap Design}
 
-To achieve the desired frequency-dependent beam pattern with $D = 32$ directions and diversity factor $R$, we design uniformly spaced delay and phase taps as~\cite{boljanovic2020design}:
+To achieve the desired frequency-dependent beam pattern with $D = 32$ directions and diversity factor $R$, uniformly spaced delay and phase taps are designed as:
 \begin{align}
 \tau_n &= (n-1)R/\text{BW} \\
 \phi_n &= (n-1)[\text{sgn}(\psi)\pi - \psi]
 \end{align}
 where $\psi = \text{mod}(2\pi R(f_c - \text{BW}/2)/\text{BW} + \pi, 2\pi) - \pi$.
-
+\\ \\
 This design ensures that each subcarrier in $\mathcal{M}_d$ produces a beam pointing in direction $d$, with the beam pattern given by a discrete Fourier transform (DFT) beam:
 \begin{equation}
 [\mathbf{f}_d]_n = \exp[-j2\pi(n-1)(d-1-D/2)/D], \quad d \leq D
@@ -128,14 +125,14 @@ This design ensures that each subcarrier in $\mathcal{M}_d$ produces a beam poin
 
 \subsection{Power-Based Super-Resolution Method}
 
-The algorithm estimates the AoA by analyzing the received power across all $D$ directions. For direction $d$, the received signal power from the $R$ subcarriers in $\mathcal{M}_d$ provides independent samples of the channel. The maximum likelihood estimate of the power in direction $d$ is~\cite{boljanovic2020design}:
+The algorithm estimates the AoA by analyzing the received power across all $D$ directions. For direction $d$, the received signal power from the $R$ subcarriers in $\mathcal{M}_d$ provides independent samples of the channel. The estimate of the power in direction $d$ is:
 \begin{equation}
 \hat{p}_d = \frac{1}{R} \sum_{m \in \mathcal{M}_d} |Y[m]|^2
 \end{equation}
 
 \subsection{Dictionary-Based Estimation}
 
-The expected power vector $\mathbf{p} = [p_1, \ldots, p_D]^T$ can be related to a dictionary matrix $\mathbf{B}$ via~\cite{boljanovic2020design}:
+The expected power vector $\mathbf{p} = [p_1, \ldots, p_D]^T$ can be related to a dictionary matrix $\mathbf{B}$ via:
 \begin{equation}
 \mathbf{p} = \mathbf{B}\mathbf{g} + N_R\sigma_N^2 \mathbf{1}
 \end{equation}
@@ -144,16 +141,15 @@ where $\mathbf{B} \in \mathbb{R}^{D \times Q}$ is constructed using a grid of $Q
 [\mathbf{B}]_{d,q} = |\mathbf{f}_d^H \mathbf{a}_R(\xi_q)|^2
 \end{equation}
 
-The vector $\mathbf{g}$ is sparse with significant energy only at the index corresponding to the dominant cluster's AoA. The AoA estimate is obtained by finding the dictionary column with highest correlation to the measured power vector~\cite{boljanovic2020design}:
+\noindent
+The vector $\mathbf{g}$ is sparse with significant energy only at the index corresponding to the dominant cluster's AoA. The AoA estimate is obtained by finding the dictionary column with highest correlation to the measured power vector:
 \begin{equation}
 \hat{\theta}^{(R)} = \xi_{q^*}, \quad \text{where} \quad q^* = \arg\max_q \frac{\hat{\mathbf{p}}^T [\mathbf{B}]_{:,q}}{\|[\mathbf{B}]_{:,q}\|}
 \end{equation}
 
-This super-resolution approach achieves accuracy beyond the angular spacing between training beams by jointly considering all direction measurements.
-
 \section{Hardware Impairments}
 
-Real TTD arrays suffer from hardware impairments that degrade beam training performance. I consider three types of errors as modeled in~\cite{boljanovic2020design}:
+Real TTD arrays suffer from hardware impairments that degrade beam training performance. I considered three types of errors as modeled in~\cite{boljanovic2020design}:
 
 \subsection{Gain Error}
 Magnitude mismatches across antenna elements are modeled with log-normal distribution:
@@ -167,7 +163,7 @@ Phase mismatches are modeled as Gaussian deviations from the intended phase:
 \begin{equation}
 \tilde{\phi}_n \sim \mathcal{N}(\phi_n, \sigma_P^2)
 \end{equation}
-where $\sigma_P$ is the standard deviation in radians or degrees.
+where $\sigma_P$ is the standard deviation in radians.
 
 \subsection{Delay Error}
 TTD control errors are modeled as Gaussian deviations from the intended delay:
@@ -175,41 +171,42 @@ TTD control errors are modeled as Gaussian deviations from the intended delay:
 \tilde{\tau}_n \sim \mathcal{N}(\tau_n, \sigma_T^2)
 \end{equation}
 where $\sigma_T$ is the standard deviation in picoseconds.
-
-For baseband (BB) TTD implementation, which is more robust to delay errors than radio frequency (RF) implementation, the impaired weight vector becomes~\cite{boljanovic2020design}:
+\\ \\
+For the baseband TTD implementation the impaired weight vector becomes:
 \begin{equation}
 [\mathbf{w}_{\text{BB}}[m]]_n = \alpha_n \exp[j(2\pi(f_m - f_c)\tilde{\tau}_n + \tilde{\phi}_n)]
 \end{equation}
 
 \section{Results and Discussion}
 
-All simulations were performed using MATLAB with $N_{\text{trials}} = 1000$ Monte Carlo trials. The signal-to-noise ratio is defined as $\text{SNR} = \sum_{l=1}^L \sigma_l^2 / \sigma_N^2$.
+All simulations were performed using MATLAB with $N_{\text{trials}} = 1000$ Monte Carlo trials. For my implementation The signal-to-noise ratio is defined as $\text{SNR} = \sigma_1^2 / (M \cdot N_R \cdot \sigma_N^2)$, where only the dominant cluster power is used and the noise power is scaled by the number of training subcarriers $M$ and receiver antennas $N_R$.
 
 \subsection{Beam Patterns of TTD Codebook}
 
-Figure~\ref{fig:beam_patterns} shows the beam patterns generated by the designed TTD codebook for $D = 32$ directions with diversity factor $R = 4$. The 32 beams uniformly cover the angular range from $-90°$ to $+90°$ with narrow mainlobes and low sidelobes, demonstrating effective spatial coverage for beam training. Each beam's frequency-dependent nature enables simultaneous probing of all directions using different subcarriers.
+Figure~\ref{fig:beam_patterns} shows the beam patterns generated by the designed TTD codebook for $D = 32$ directions with diversity factor $R = 4$. The 32 beams uniformly cover the angular range from $-90°$ to $+90°$ with narrow mainlobes and low sidelobes, demonstrating effective spatial coverage for beam training.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{results/plot1_beam_patterns.png}
-\caption{Beam patterns of the designed TTD codebook showing 32 uniformly spaced directional beams. The $N_R = 16$ element array with TTD implementation creates narrow beams that cover the entire angular space.}
+\caption{Beam patterns of the designed TTD codebook showing 32 uniformly spaced directional beams.}
 \label{fig:beam_patterns}
 \end{figure}
 
 \subsection{RMSE vs. SNR}
 
-Figure~\ref{fig:rmse_snr} presents the root mean square error (RMSE) of angle estimation as a function of SNR for diversity factors $R = 1, 2, 4$ without hardware impairments. As expected, RMSE decreases with increasing SNR. The diversity factor significantly impacts performance: higher $R$ values provide better estimation accuracy by averaging over more independent channel realizations.
+Figure~\ref{fig:rmse_snr} presents the root mean square error (RMSE) of angle estimation as a function of SNR for diversity factors $R = 1, 2, 4$ without hardware impairments. The diversity factor significantly impacts performance: higher $R$ values provide better estimation accuracy by averaging over more independent channel realizations.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.75\textwidth]{results/plot2_rmse_vs_snr.png}
-\caption{RMSE of angle estimation vs. SNR for diversity factors $R = 1, 2, 4$ without hardware impairments. Higher diversity factors achieve lower RMSE by exploiting frequency diversity, with $R = 4$ reaching sub-degree accuracy at high SNR.}
+\caption{RMSE of angle estimation vs. SNR for diversity factors $R = 1, 2, 4$ without hardware impairments.}
 \label{fig:rmse_snr}
 \end{figure}
 
-At SNR = 0~dB, the RMSE is approximately 8° for $R = 1$, 4° for $R = 2$, and 2° for $R = 4$. At high SNR (20~dB), the RMSE approaches an error floor determined by the dictionary resolution $\pi/(2Q)$, achieving sub-degree accuracy. The performance improvement from $R = 1$ to $R = 4$ demonstrates the value of frequency diversity in frequency-selective channels.
-
-\textbf{Implementation Note:} My results exhibit a higher noise floor compared to Figure 3 in~\cite{boljanovic2020design}, particularly noticeable at high SNR values where my RMSE does not decrease as steeply. Despite faithful implementation of all mathematical formulations from the reference paper, including the channel model, noise normalization, and estimation algorithm, my implementation appears to have an artificially elevated noise floor. This discrepancy may stem from subtle differences in simulation parameters, random number generation, or numerical precision that are not explicitly detailed in~\cite{boljanovic2020design}. The qualitative trends remain consistent with the reference, but absolute RMSE values are approximately 1-2 dB higher across all SNR ranges.
+\noindent
+At SNR = 0~dB, the RMSE is approximately 15° for $R = 1$, 5° for $R = 2$, and 0.8° for $R = 4$. At high SNR (20~dB), the RMSE approaches but does not reach an error floor determined by the dictionary resolution $\pi/(2Q)$, achieving sub-degree accuracy. The performance improvement from $R = 1$ to $R = 4$ demonstrates the value of frequency diversity in frequency-selective channels.
+\\ \\
+\textbf{Note:} My results exhibit a higher noise floor compared to Figure 3 in~\cite{boljanovic2020design}, particularly noticeable at high SNR values where my RMSE does reach the error floor. This discrepancy may stem from subtle differences in simulation parameters, random number generation, or numerical precision that are not explicitly detailed in~\cite{boljanovic2020design}, or through some mistake in my implementation. The qualitative trend remains consistent with the reference, but the RMSE values are higher across all SNR ranges.
 
 \subsection{RMSE vs. Gain Error}
 
@@ -218,13 +215,12 @@ Figure~\ref{fig:rmse_gain} illustrates the impact of gain mismatch on angle esti
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.75\textwidth]{results/plot3_rmse_vs_gain_error.png}
-\caption{RMSE of angle estimation vs. gain error standard deviation $\sigma_A$ at SNR = 0~dB with $R = 4$. The algorithm maintains acceptable performance up to $\sigma_A \approx 2.5$~dB.}
+\caption{RMSE of angle estimation vs. gain error standard deviation $\sigma_A$ at SNR = 0~dB with $R = 4$.}
 \label{fig:rmse_gain}
 \end{figure}
 
-The results show that the algorithm is relatively robust to moderate gain errors. For $\sigma_A < 2$~dB, the RMSE remains below 5°. However, degradation occurs when $\sigma_A > 2.5$~dB, where the RMSE increases. This general trend is consistent with~\cite{boljanovic2020design}.
-
-\textbf{Implementation Note:} My gain error results show a qualitatively similar trend to the red dashed line with stars in Figure 4 of~\cite{boljanovic2020design}, but the absolute RMSE values are elevated due to the aforementioned noise floor issue. More significantly, I observe that gain errors have less impact on my implementation than reported in the reference paper. In~\cite{boljanovic2020design}, gain errors cause more severe degradation than phase errors across all impairment levels, but my implementation shows the opposite behavior (see Section 6.4). This suggests potential differences in how hardware impairments interact with the estimation algorithm, possibly related to normalization procedures or the dictionary matching process.
+\noindent
+The results show that the algorithm is relatively robust to moderate gain errors. For $\sigma_A < 2$~dB, the RMSE remains below 5°. However, degradation occurs when $\sigma_A > 2$~dB, where the RMSE increases. My gain error results show a qualitatively similar trend to the red dashed line with stars in Figure 4 of~\cite{boljanovic2020design}, but the absolute RMSE values are elevated even when the gain $\sigma_A$ is small due to the noise floor issue. 
 
 \subsection{RMSE vs. Phase Error}
 
@@ -233,7 +229,7 @@ Figure~\ref{fig:rmse_phase} shows the impact of phase mismatch on estimation acc
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.75\textwidth]{results/plot4_rmse_vs_phase_error.png}
-\caption{RMSE of angle estimation vs. phase error standard deviation $\sigma_P$ at SNR = 0~dB with $R = 4$. Our implementation shows stronger sensitivity to phase errors compared to the reference paper.}
+\caption{RMSE of angle estimation vs. phase error standard deviation $\sigma_P$ at SNR = 0~dB with $R = 4$.}
 \label{fig:rmse_phase}
 \end{figure}
 
