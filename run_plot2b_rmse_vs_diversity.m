@@ -98,7 +98,7 @@ plot([log2(min(R_values)), log2(max(R_values))], ...
 hold off;
 
 % formatting
-set(gca, 'YScale', 'log');  % THIS MAKES Y-AXIS LOGARITHMIC
+set(gca, 'YScale', 'log');
 xlabel('Diversity Order R', 'FontSize', 12, 'FontWeight', 'bold');
 ylabel('RMSE (degrees)', 'FontSize', 12, 'FontWeight', 'bold');
 title('AoA Estimation RMSE vs. Diversity Order', 'FontSize', 14, 'FontWeight', 'bold');

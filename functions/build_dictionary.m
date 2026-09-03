@@ -14,15 +14,12 @@ function [B, angle_grid] = build_dictionary(params, R, tau, phi)
     % array responses for all angles in dictionary
     aR_dict = array_response(angle_grid, NR);
 
-    % get subcarrier mapping
-    [M_sets, ~] = compute_subcarrier_sets(params, R);
-
     fd_matrix = zeros(NR, D);
 
+    n_vec = (1:NR).';
+    
     for d = 1:D
-        subcarrier_idx = M_sets{d}(1);  % use first subcarrier since all should give same f_d
-        w = compute_ttd_awv(subcarrier_idx, tau, phi, params);
-        fd_matrix(:, d) = w;
+        fd_matrix(:, d) = exp(-1j * 2*pi * (n_vec - 1) * (d - 1 - D/2) / D);
     end
 
     % compute dictionary matrix

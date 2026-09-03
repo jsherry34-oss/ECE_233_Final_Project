@@ -60,14 +60,3 @@ saveas(gcf, 'results/plot1_beam_patterns.png');
 fprintf('\nPlot 1 saved to results/\n');
 fprintf('  - plot1_beam_patterns.fig\n');
 fprintf('  - plot1_beam_patterns.png\n\n');
-
-%% print peak locations
-[~, peak_locs] = max(B, [], 2);
-peak_angles = angle_grid(peak_locs) * 180/pi;
-
-fprintf('Beam peak angles (degrees):\n');
-fprintf('Beam  1: %6.2f\n', peak_angles(1));
-fprintf('Beam  8: %6.2f\n', peak_angles(8));
-fprintf('Beam 16: %6.2f\n', peak_angles(16));
-fprintf('Beam 24: %6.2f\n', peak_angles(24));
-fprintf('Beam 32: %6.2f\n', peak_angles(32));

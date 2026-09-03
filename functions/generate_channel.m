@@ -17,9 +17,35 @@ function [H_subbands, theta_AoA, theta_AoD, sigma_squared] = generate_channel(pa
     fc = params.fc;  
     BW = params.BW;  
 
-    % generate random AoA and AoD for each cluster
-    theta_AoA = aoa_range(1) + (aoa_range(2) - aoa_range(1)) * rand(1, L);
-    theta_AoD = aoa_range(1) + (aoa_range(2) - aoa_range(1)) * rand(1, L);
+    theta_AoA = zeros(1, L);
+    theta_AoD = zeros(1, L);
+    
+    % generate dominant path
+    theta_AoA(1) = aoa_range(1) + (aoa_range(2) - aoa_range(1)) * rand();
+    theta_AoD(1) = aoa_range(1) + (aoa_range(2) - aoa_range(1)) * rand();
+    
+    % generate weak paths with minimum 10-degree separation
+    min_sep = 10 * pi / 180; 
+    
+    for l = 2:L
+        valid_AoA = false;
+        while ~valid_AoA
+            cand = aoa_range(1) + (aoa_range(2) - aoa_range(1)) * rand();
+            if min(abs(cand - theta_AoA(1:l-1))) > min_sep
+                theta_AoA(l) = cand;
+                valid_AoA = true;
+            end
+        end
+        
+        valid_AoD = false;
+        while ~valid_AoD
+            cand = aoa_range(1) + (aoa_range(2) - aoa_range(1)) * rand();
+            if min(abs(cand - theta_AoD(1:l-1))) > min_sep
+                theta_AoD(l) = cand;
+                valid_AoD = true;
+            end
+        end
+    end
 
     % sort clusters by power
     [sigma_squared, ~] = sort(sigma_squared, 'descend');
@@ -41,9 +67,15 @@ function [H_subbands, theta_AoA, theta_AoD, sigma_squared] = generate_channel(pa
     delay_spread = params.delay_spread;
 
     ray_delays = zeros(L, rays_per_cluster);
+    alpha_lr = zeros(L, rays_per_cluster); % NEW: Pre-compute amplitudes
+    
     for l = 1:L
-        % uniformly distributed delays within the spread for each cluster
+        % uniformly distributed delays
         ray_delays(l, :) = delay_spread * rand(1, rays_per_cluster);
+        
+        % generate ray complex amplitudes once per channel realization
+        std_dev_per_ray = sqrt(sigma_squared(l) / rays_per_cluster / 2);
+        alpha_lr(l, :) = std_dev_per_ray * (randn(1, rays_per_cluster) + 1j*randn(1, rays_per_cluster));
     end
 
     % compute subcarrier frequencies for all Kc sub-bands
@@ -61,24 +93,22 @@ function [H_subbands, theta_AoA, theta_AoD, sigma_squared] = generate_channel(pa
         % sum contributions from all clusters
         for l = 1:L
             Gl_k = 0;
-            std_dev_per_ray = sqrt(sigma_squared(l) / rays_per_cluster / 2);
-
+            
             for r = 1:rays_per_cluster
-                % ray complex amplitude
-                alpha_lr = std_dev_per_ray * (randn() + 1j*randn());
+                % pre computed amplitude
+                alpha = alpha_lr(l, r);
 
                 % ray delay phase shift
                 tau_lr = ray_delays(l, r);
                 phase_shift = exp(-1j * 2*pi * f_k * tau_lr);
 
                 % add ray contribution
-                Gl_k = Gl_k + alpha_lr * phase_shift;
+                Gl_k = Gl_k + alpha * phase_shift;
             end
 
             % add cluster contribution
             H_k = H_k + Gl_k * (aR_vectors(:, l) * aT_vectors(:, l)');
         end
-
         H_subbands(:, :, k) = H_k;
     end
 end

@@ -11,30 +11,30 @@ function w_impaired = add_hardware_impairments(~, m_indices, tau, phi, params, s
     %% generate impairments
     % gain error
     if sigma_A > 0
-        gain_error_dB = sigma_A * randn(NR, 1);  % N(0, σ_A²) in dB
-        alpha = 10.^(gain_error_dB / 10);         % Convert to linear scale
+        gain_error_dB = sigma_A * randn(NR, 1);
+        alpha = 10.^(gain_error_dB / 10);
     else
         alpha = ones(NR, 1);
     end
 
     % phase error
     if sigma_P > 0
-        phi_tilde = phi(:) + sigma_P * randn(NR, 1);  % Add Gaussian error
+        phi_tilde = phi(:) + sigma_P * randn(NR, 1);
     else
         phi_tilde = phi(:);
     end
 
     % delay error
     if sigma_T > 0
-        tau_tilde = tau(:) + sigma_T * randn(NR, 1);  % Add Gaussian error
+        tau_tilde = tau(:) + sigma_T * randn(NR, 1);
     else
         tau_tilde = tau(:);
     end
 
     % subcarrier frequencies
-    f_m = fc - BW/2 + (m_indices - 1) * BW/(Mtot - 1);  % 1 × M
+    f_m = fc - BW/2 + (m_indices - 1) * (BW / Mtot);
 
     phase_term = 2*pi * (tau_tilde * (f_m - fc)) + phi_tilde;
 
-    w_impaired = alpha .* exp(1j * phase_term);
+    w_impaired = alpha .* exp(-1j * phase_term);
 end

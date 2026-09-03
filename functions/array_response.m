@@ -8,5 +8,5 @@ function a = array_response(theta, N)
     n = (1:N).';
 
     % compute array response
-    a = (1/sqrt(N)) * exp(1j * (n-1) * pi * sin(theta));
+    a = (1/sqrt(N)) * exp(-1j * (n-1) * pi * sin(theta));
 end

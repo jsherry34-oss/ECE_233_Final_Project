@@ -112,6 +112,7 @@ fprintf('  - plot2_rmse_vs_snr.fig\n');
 fprintf('  - plot2_rmse_vs_snr.png\n\n');
 
 %% print summary
+fprintf('\n--- Summary ---\n');
 for r_idx = 1:length(R_values)
     fprintf('R = %d:\n', R_values(r_idx));
     fprintf('  SNR = -20 dB: RMSE = %6.3f deg\n', RMSE_results(r_idx, 1));

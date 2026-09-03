@@ -24,7 +24,7 @@ function params = set_system_parameters()
     params.delay_spread = 10e-9;
 
     % monte carlo sim 
-    params.N_trials = 1000;
+    params.N_trials = 5000;
 
     % ADC resolution 
     params.ADC_bits = 5;
@@ -34,7 +34,7 @@ function params = set_system_parameters()
     params.angle_grid = linspace(-pi/2, pi/2, params.Q);
 
     % subcarrier spacing
-    params.delta_f = params.BW / (params.Mtot - 1);
+    params.delta_f = params.BW / params.Mtot;
 
     % subcarrier frequencies
     params.f_subcarriers = params.fc - params.BW/2 + ...

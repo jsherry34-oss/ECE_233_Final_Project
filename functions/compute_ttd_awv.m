@@ -13,9 +13,8 @@ function w = compute_ttd_awv(m, tau, phi, params)
     phi = phi(:);        % force column vector
 
     % compute subcarrier frequencies
-    f_m = fc - BW/2 + (m - 1) * BW / (Mtot - 1);
+    f_m = fc - BW/2 + (m - 1) * (BW / Mtot);
 
     % compute AWVs
-    w = exp(1j * (2*pi * (tau * f_m) + phi));
-
+    w = exp(-1j * (2*pi * (tau * f_m) + phi));
 end

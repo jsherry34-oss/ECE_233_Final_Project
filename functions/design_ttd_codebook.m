@@ -17,6 +17,9 @@ function [tau, phi] = design_ttd_codebook(params, R)
     % compute phase compensation factor
     psi = mod(2*pi*R*(fc - BW/2)/BW + pi, 2*pi) - pi;
 
+    psi_sign = sign(psi);
+    psi_sign(psi_sign == 0) = 1;
+
     % compute phase taps
-    phi = (n-1) * (sign(psi)*pi - psi);
+    phi = (n-1) * (psi_sign*pi - psi);
 end

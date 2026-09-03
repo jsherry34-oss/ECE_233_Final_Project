@@ -113,7 +113,7 @@ fprintf('  - plot4_rmse_vs_phase_error.fig\n');
 fprintf('  - plot4_rmse_vs_phase_error.png\n\n');
 
 %% print summary
-fprintf('σ_P =  0 deg: RMSE = %6.3f deg (no impairment)\n', RMSE_results(1));
+fprintf('σ_P =  0 deg: RMSE = %6.3f deg\n', RMSE_results(1));
 fprintf('σ_P = 25 deg: RMSE = %6.3f deg\n', RMSE_results(sigma_P_range_deg == 25));
-fprintf('σ_P = 30 deg: RMSE = %6.3f deg (degradation threshold)\n', RMSE_results(sigma_P_range_deg == 30));
-fprintf('σ_P = 50 deg: RMSE = %6.3f deg (severe degradation)\n', RMSE_results(end));
+fprintf('σ_P = 30 deg: RMSE = %6.3f deg\n', RMSE_results(sigma_P_range_deg == 30));
+fprintf('σ_P = 50 deg: RMSE = %6.3f deg\n', RMSE_results(end));
