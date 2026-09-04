@@ -24,12 +24,9 @@ function params = set_system_parameters()
     params.delay_spread = 10e-9;
 
     % monte carlo sim 
-    params.N_trials = 500;
+    params.N_trials = 5000;
 
-    % ADC resolution 
-    params.ADC_bits = 5;
-
-    % Angular Grid 
+    % angular Grid 
     params.angle_range = [-pi/2, pi/2];
     params.angle_grid = linspace(-pi/2, pi/2, params.Q);
 

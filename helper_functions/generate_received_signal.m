@@ -21,8 +21,8 @@ function Y = generate_received_signal(H_subbands, w_matrix, v, M_all, params, SN
     SNR_linear = 10^(SNR_dB/10);
 
     % noise power calculation
-    sigma_1_squared = params.sigma_squared(1);  % Dominant cluster only
-    sigma_N_squared = sigma_1_squared / (M * NR * SNR_linear);
+    numerator = sum(params.sigma_squared);
+    sigma_N_squared = numerator / (M * NR * SNR_linear);
 
     % generate received signal for each training subcarrier
     Y = zeros(1, M);

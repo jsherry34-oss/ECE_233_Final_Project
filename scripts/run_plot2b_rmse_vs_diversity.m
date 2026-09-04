@@ -1,8 +1,7 @@
 close all; clc;
 
 % add paths
-addpath('functions');
-addpath('utils');
+addpath('helper_functions');
 
 fprintf('Generating Plot 2b ...\n');
 
